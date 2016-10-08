@@ -43,16 +43,39 @@ func main() {
   flag.Parse()
 
   var rule = uint8(argRule)
-  var cells = getStart(size)
+  var board [][]uint8
+
+  board = initialize_platten(size, rows)
+  print_board(board)
+
   for i := uint(0); i < rows; i++ {
-    fmt.Println(cells)
-    cells = iterate_cells(rule,cells)
+    print_board(board)
+    board = iterate_board(rule, board)
   }
 }
 
-func iterate_cells(rule uint8, states []byte)[]byte {
-  var answer = make([]byte, len(states))
-  var neighborhood byte
+func print_board(board [][]uint8) {
+  for row := len(board) - 1; row >= 0; row-- {
+    fmt.Println(board[row])
+  }
+}
+
+func iterate_board(rule uint8, board [][]uint8)[][]uint8 {
+  var new_board [][]uint8
+  
+  size := len(board[0])
+  rows := uint(len(board))
+  for i := uint(1); i < rows; i++ {
+    new_board = append(new_board, make([]uint8, size))
+    copy(new_board[i - 1], board[i])
+  }
+  new_board = append(new_board, iterate_cells(rule, board[len(board)-1]))
+  return new_board
+}
+
+func iterate_cells(rule uint8, states []uint8)[]uint8 {
+  var answer = make([]uint8, len(states))
+  var neighborhood uint8
   var width = len(states)
 
   for idx, v := range states {
@@ -90,8 +113,14 @@ func iterate_cells(rule uint8, states []byte)[]byte {
   return answer
 }
 
-func getStart(size uint)[]byte {
-  var answer = make([]byte, size)
-  answer[size/2] = 1
-  return answer
+func initialize_platten(size uint, rows uint)[][]uint8 {
+
+  var board = [][]uint8{}
+
+  for i := uint(0); i < rows - 1; i++ {
+    board = append(board, make([]uint8, size))
+  }
+  var first = make([]uint8, size)
+  first[size/2] = 1
+  return append(board, first)
 }

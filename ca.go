@@ -1,10 +1,12 @@
 package main
 
 import (
+  "os"
 	"fmt"
 	"flag"
-  //"image"
-	//"image/color"
+  "image"
+  "image/color"
+	"image/gif"
 )
 
 func getPowerOfTwo(n uint8)uint8 {
@@ -48,9 +50,37 @@ func main() {
   board = initialize_platten(size, rows)
   print_board(board)
 
+  var palette = []color.Color{
+    color.RGBA{0x00, 0x00, 0x00, 0xff}, //black
+    color.RGBA{0xff, 0xff, 0xff, 0xff}, //white
+  }
+  var images []*image.Paletted
+  var delays []int
+
+
   for i := uint(0); i < rows; i++ {
-    print_board(board)
+    img := image.NewPaletted(image.Rect(0, 0, int(size), int(rows)), palette)
+    images = append(images, img)
+    delays = append(delays, 20)
     board = iterate_board(rule, board)
+    draw_image(img, board, palette)
+  }
+
+  f, _ := os.OpenFile("ca.gif", os.O_WRONLY|os.O_CREATE, 0600)
+  defer f.Close()
+  gif.EncodeAll(f, &gif.GIF{
+      Image: images,
+      Delay: delays,
+  })
+}
+
+func draw_image( img *image.Paletted, board [][]uint8, palette []color.Color) {
+  rows := len(board)
+  cols := len(board[0])
+  for row := 0; row < rows; row++ {
+    for col := 0; col < cols; col++ {
+      img.Set(col, row, palette[board[row][col]])
+    }
   }
 }
 
@@ -62,7 +92,7 @@ func print_board(board [][]uint8) {
 
 func iterate_board(rule uint8, board [][]uint8)[][]uint8 {
   var new_board [][]uint8
-  
+
   size := len(board[0])
   rows := uint(len(board))
   for i := uint(1); i < rows; i++ {
@@ -80,6 +110,7 @@ func iterate_cells(rule uint8, states []uint8)[]uint8 {
 
   for idx, v := range states {
     neighborhood = 0
+
     if idx == 0 {
       if states[len(states)-1] == 1 {
         neighborhood += 1;
@@ -103,11 +134,12 @@ func iterate_cells(rule uint8, states []uint8)[]uint8 {
         neighborhood += 4;
       }
     }
-     if rule & getPowerOfTwo(neighborhood) > 0 {
-       answer[idx] = 1
-     } else {
-       answer[idx] = 0
-     }
+
+    if rule & getPowerOfTwo(neighborhood) > 0 {
+      answer[idx] = 1
+    } else {
+      answer[idx] = 0
+    }
   }
 
   return answer

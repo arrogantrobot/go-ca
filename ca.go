@@ -36,19 +36,22 @@ func main() {
   var (
     argRule uint
     size uint
+    height uint
     rows uint
+    delay int
   )
 
   flag.UintVar(&argRule, "rule", 18, "a positive integer between 0 and 255 naming the rule to be applied")
   flag.UintVar(&size, "width", 64, "width in cells")
-  flag.UintVar(&rows, "height", 32, "height in cells")
+  flag.UintVar(&height, "height", 64, "width in cells")
+  flag.UintVar(&rows, "rows", 64, "number of rows to generate")
+  flag.IntVar(&delay, "delay", 5, "time in millis between frames")
   flag.Parse()
 
   var rule = uint8(argRule)
   var board [][]uint8
 
-  board = initialize_platten(size, rows)
-  print_board(board)
+  board = initialize_platten(size, height)
 
   var palette = []color.Color{
     color.RGBA{0x00, 0x00, 0x00, 0xff}, //black
@@ -59,13 +62,14 @@ func main() {
 
 
   for i := uint(0); i < rows; i++ {
-    img := image.NewPaletted(image.Rect(0, 0, int(size), int(rows)), palette)
+    img := image.NewPaletted(image.Rect(0, 0, int(size), int(height)), palette)
     images = append(images, img)
-    delays = append(delays, 20)
+    delays = append(delays, delay)
     board = iterate_board(rule, board)
     draw_image(img, board, palette)
   }
 
+  //TODO check for existing file, fail or delete it before proceeding
   f, _ := os.OpenFile("ca.gif", os.O_WRONLY|os.O_CREATE, 0600)
   defer f.Close()
   gif.EncodeAll(f, &gif.GIF{
